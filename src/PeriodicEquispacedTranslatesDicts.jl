@@ -1,10 +1,6 @@
-module PeriodicEquispacedTranslatesDicts
-
-using BasisFunctions, DomainSets, GridArrays, ..TranslatesDictionaries, FillArrays, ..PeriodicIntervals
 
 using BasisFunctions: VerticalBandedMatrix, default_mixedgram_discretemeasure,
-    DomainLebesgueMeasure, DiscreteMeasure
-using ..TranslatesDictionaries: unsafe_eval_kernel, eval_kernel, unsafe_eval_kernel_derivative
+    LebesgueDomain, DiscreteWeight
 using DomainSets: width
 using GridArrays: similargrid
 
@@ -12,7 +8,6 @@ import BasisFunctions: isperiodic, period, support, name, hasgrid_transform, tra
     transform_to_grid, evaluation, gram, unsafe_eval_element, unsafe_eval_element_derivative,
     similar, rescale, dict_in_support
 import LinearAlgebra: norm
-import ..TranslatesDictionaries: compatible_translationgrid
 
 export PeriodicEquispacedTranslates
 """
@@ -124,7 +119,7 @@ function isgramcompatible(b::PeriodicEquispacedTranslates, grid::AbstractEquispa
     support(b)≈coverdomain(grid) && (n≈nInt)
 end
 
-function gram(::Type{T}, dict::PeriodicEquispacedTranslates, measure::DiscreteMeasure, grid::AbstractEquispacedGrid, weights::FillArrays.AbstractFill;
+function gram(::Type{T}, dict::PeriodicEquispacedTranslates, measure::DiscreteWeight, grid::AbstractEquispacedGrid, weights::FillArrays.AbstractFill;
         options...) where {T}
     if isgramcompatible(dict, grid)
         CirculantOperator(default_mixedgram_discretemeasure(T, dict, dict, measure, grid, weights; options...))
@@ -134,13 +129,13 @@ function gram(::Type{T}, dict::PeriodicEquispacedTranslates, measure::DiscreteMe
 end
 
 
-function gram(::Type{T}, dict::PeriodicEquispacedTranslates, measure::Union{DomainLebesgueMeasure,LegendreMeasure,FourierMeasure};
+function gram(::Type{T}, dict::PeriodicEquispacedTranslates, measure::Union{LebesgueDomain,LegendreWeight,FourierWeight};
         options...) where {T}
     @assert support(dict) ≈ support(measure)
     CirculantOperator{T}(firstgramcolumn(T, dict, measure; options...), dict, dict)
 end
 
-function firstgramcolumn(T, dict::Dictionary, measure::Measure; options...)
+function firstgramcolumn(T, dict::Dictionary, measure::Weight; options...)
     firstcolumn = zeros(T, length(dict))
     for (index,i) in enumerate(ordering(dict))
         firstcolumn[index] = innerproduct(dict, i, dict, ordering(dict)[1], measure; options...)
@@ -155,7 +150,7 @@ for (f,g) in ((:unsafe_eval_element,:unsafe_eval_kernel),
     @eval function $f(dict::PeriodicEquispacedTranslates{T,S,:sum}, idx, x, args...) where {T,S}
         c = translationgrid(dict)[idx]
         per = period(dict)
-        A,B = extrema(kernel_support(dict))
+		A,B = extrema(kernel_support(dict))
 
         z = $g(dict, x - c, args...)
     	# Now evaluate the periodic extension. We add and subtract the period
@@ -223,8 +218,6 @@ similar(dict::GenericPeriodicEquispacedTranslates{K,S,PERIODIZATION}, ::Type{T},
 function rescale(dict::PeriodicEquispacedTranslates, a::T, b::T) where {T<:Number}
     map = interval_map(extrema(support(dict))...,   a, b)
     GenericPeriodicEquispacedTranslates(mapped_grid(translationgrid(dict),map),
-        x->eval_kernel(dict, (inv(map))(x)),
-        map(kernel_support(dict)))
-end
-
+        x->eval_kernel(dict, inverse(map, x)),
+        map.(kernel_support(dict)))
 end

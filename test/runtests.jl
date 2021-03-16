@@ -1,6 +1,8 @@
-types = [Float64, ]
+types = (Float64,)
+
 using CompactTranslatesDict, BasisFunctions, Test, DomainSets
 using BasisFunctions: period, isperiodic
+
 @testset begin
     g1 = GenericTranslates(EquispacedGrid(10,0,1), exp)
     g2 = GenericEquispacedTranslates(PeriodicEquispacedGrid(10,0,1), exp)
@@ -40,8 +42,8 @@ end
     B = BSplineTranslatesBasis(10,3)
     g0 = BasisFunctions.default_gram(B;overquad=100)
     g1 = gram(B;overquad=100)
-    g2 = gram(B, FourierMeasure();overquad=100)
-    g3 = BasisFunctions.default_gram(B, FourierMeasure();overquad=100)
+    g2 = gram(B, FourierWeight();overquad=100)
+    g3 = BasisFunctions.default_gram(B, FourierWeight();overquad=100)
     @test g1≈g0≈g2≈g3
     @test g1 isa CirculantOperator
     @test g2 isa CirculantOperator

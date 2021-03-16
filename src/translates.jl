@@ -1,8 +1,5 @@
-module TranslatesDictionaries
 
-using BasisFunctions, DomainSets, GridArrays, Reexport
-
-using BasisFunctions: DomainLebesgueMeasure
+using BasisFunctions: LebesgueDomain
 
 import BasisFunctions: support, size, length, ordering, unsafe_eval_element, unsafe_eval_element_derivative,
     hasinterpolationgrid,
@@ -54,7 +51,7 @@ interpolation_grid(dict::Translates) = translationgrid(dict)
 compatible_interpolationgrid(dict::Translates, grid::AbstractGrid) =
     support(dict)≈coverdomain(grid) && compatible_translationgrid(dict, grid)
 hasmeasure(dict::Translates) = true
-measure(dict::Translates) = DomainLebesgueMeasure(support(dict))
+measure(dict::Translates) = LebesgueDomain(support(dict))
 
 
 export eval_kernel
@@ -148,6 +145,4 @@ struct GenericEquispacedTranslates{T,S,GRID<:AbstractGrid,DOMAIN<:Domain,KERN} <
         @assert compatible_translationgrid(GenericEquispacedTranslates, grid)
         new{T,S,typeof(grid),typeof(kernel_support),typeof(kernel)}(grid, kernel, kernel_support)
     end
-end
-
 end
