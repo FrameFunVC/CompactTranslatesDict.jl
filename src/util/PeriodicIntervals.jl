@@ -5,7 +5,8 @@ using DomainSets: width
 
 import DomainSets: indomain, approx_indomain,
     infimum, supremum,
-    ncomponents, components, component
+    ncomponents, components, component,
+    center
 import BasisFunctions: iscomposite, period
 
 export PeriodicInterval
@@ -120,6 +121,7 @@ infimum(d::PeriodicInterval) = infimum(d.interval1)
 
 supremum(d::PeriodicInterval) = ncomponents(d) == 1 ? supremum(d.interval1) : supremum(d.interval2)
 
+center(d::PeriodicInterval) = center(d.subdomain)
 
 function DomainSets.intersectdomain(d1::PeriodicInterval, d2::PeriodicInterval)
     @assert d1.periodicdomain == d2.periodicdomain
